@@ -1,69 +1,119 @@
-import simpy, random
+import simpy, random, logger
+
+class Packet(object):
+    def __init__(self, env, msg, dest_node, cb):
+        self.env = env
+        self.msg = msg
+        self.n = dest_node
+        self.reply = None
+        self.busy = True
+        # Callback used to signal the link to inspect the packet state
+        self.callback = cb
+        # Process
+        self.proc = self.env.process(self.packet_task())
+
+    def busy(self):
+        return self.busy
+
+    def delay(self, prop_delay):
+        d = random.normalvariate(prop_delay[0],prop_delay[1])
+        # The distribution can produce negative numbers, so we must catch these
+        if d < 0: return 0.0
+        return d
+
+    def actions(self):
+        m = self.msg
+        #self.info("Running actions")
+        if m == "get_mbtcp":
+            self.reply = self.n.state
+        elif m == "Robot1_get_job":
+            self.reply = self.n.r1_job
+        elif m == "Robot2_get_job":
+            self.reply = self.n.r2_job
+        elif "robot_prox" in m: # This value gets chosen for all PROX messages, the elif then falls out
+            if "true" in m:
+                val = True
+            else:
+                val = False
+            if   "s1" in m:
+                self.n.s1_prox = val
+            elif "s2" in m:
+                self.n.s2_prox = val
+            elif "s3" in m:
+                self.n.s3_prox = val
+            elif "s4" in m:
+                self.n.s4_prox = val
+            self.reply = "OK"
+        elif "set_prox" in m:
+            if "true" in m:
+                self.n.robot_prox = True
+            else:
+                self.n.robot_prox = False
+            self.reply = "OK"
+
+    def packet_task(self):
+        # TX propagation delay
+        yield self.env.timeout( self.delay([0.001, 0.0]) )
+        # Perform packet actions (e.g., get/set data at destination node)
+        self.actions()
+        # RX propagation delay
+        yield self.env.timeout( self.delay([0.001, 0.0]) )
+        self.busy = False
+        # Inform the link that this message has completed its tasks
+        self.callback()
+
+
+class Socket(object):
+    def __init__(self, env, name, dest_node):
+        self.env = env
+        self.name = name
+        self.n = dest_node
+        self.medium = None
+        self.busy = False
+        self.response = False
+
+    def send_packet(self, msg):
+        if not self.busy:
+            self.busy = True
+            self.medium = Packet(self.env, msg, self.n, self.response_notify)
+
+    def response_notify(self):
+        self.busy = False
+        self.response = True
+
+    def pop_packet(self):
+        pkt = self.medium
+        self.medium = None
+        self.busy = False
+        self.response = False
+        return pkt
+
 
 class Link(object):
-
-    def __init__(self, env, name, node1, node2):
+    def __init__(self, env, name, dest_node, sockets):
         self.env = env
-        self.link_rx_buff = None
-        self.link_tx_buff = None
         self.name = name
-        self.n1 = node1
-        self.n2 = node2
-        self.busy = False
-        self.msg_cntr = 0
+        self.n = dest_node
+        self.sockets = {}
+        self.msg_count = 0
         #Disturbance Variables
-        self.disturbance_delay = True
-        self.delay_mu = 0.005
+        self.delay_mu = 0.01
         self.delay_sigma = 0.0
-        # Processes
-        self.rx_proc = self.env.process(self.link_rx_task())
-        self.tx_proc = self.env.process(self.link_tx_task())
+        # 'sockets' parameter should be a list of string names
+        for sock in sockets:
+            self.socket_open(sock)
 
-    # Helper function alias for readability
-    def tx(self,msg):
-        self.link_receive(msg)
+    def socket_open(self, name):
+        self.sockets[name] = Socket(self.env, name, self.n)
 
-    # Helper function alias for readability
-    def rx(self):
-        #self.link_receive(msg)
-        if(self.link_tx_buff != None):
-            return_value = self.link_tx_buff
-            self.link_tx_buff = None
-            return return_value
-        else:
-            return None
+    def socket_busy(self, name):
+        return self.sockets[name].busy
 
-# RECEIVE (FROM NODE) FUNCTIONS
+    def socket_response(self, name):
+        return self.sockets[name].response
 
-    def link_receive(self,msg):
-        self.msg_cntr += 1
-        self.link_rx_buff = msg
-        self.busy = True
-        self.rx_proc.interrupt()
+    def send_packet(self, socket, msg):
+        self.sockets[socket].send_packet(msg)
 
-    def link_rx_task(self):
-        while True:
-            try:
-                yield self.env.timeout(10.0)
-            except simpy.Interrupt:
-                if self.link_rx_buff == "get_mbtcp":
-                    self.tx_proc.interrupt()
-                    self.link_rx_buff = None
-
-# TRANSMIT (FROM NODE) FUNCTIONS
-
-    def transmit(self):
-        #self.n1.rx(self.link_tx_buff)
-        self.link_tx_buff = self.n2.state
-        self.busy = False
-
-    def link_tx_task(self):
-        while True:
-            try:
-                yield self.env.timeout(10.0)
-            except simpy.Interrupt:
-                if self.disturbance_delay:
-                    delay = abs(random.normalvariate(self.delay_mu,self.delay_sigma))
-                    #print "Delay: " + str(delay)
-                    yield self.env.timeout(delay)
-                self.transmit()
+    def get_packet(self, socket):
+        return self.sockets[socket].pop_packet()
