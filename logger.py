@@ -1,3 +1,16 @@
+
+# Author: Timothy Zimmerman (timothy.zimmerman@nist.gov)
+# Organization: National Institute of Standards and Technology
+# U.S. Department of Commerce
+# License: Public Domain
+#
+# Logger functions to make life easier. Automatically attaches to the current
+# Python logger, and provides simple functions for creating the messages.
+#
+# msg : Message to be logged
+# n   : Name of the object that created the log message
+# t   : Simulation time the log message was created
+
 import logging
 
 logger = logging.getLogger("ts")

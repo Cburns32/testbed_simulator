@@ -1,7 +1,7 @@
 # Testbed Simulator
-This Python project simulates the discrete events that occur within the Cybersecurity for Smart Manufacturing Systems Testbed, located at the National Institute of Standards and Technology in Gaithersburg, Maryland. The Robotic System of the testbed (which this simulator models) utilizes two KUKA Youbots and four emulated machining centers. Machine tending is handled by the robots, transferring parts from station to station until all operations are completed.
+This Python project simulates the discrete events that occur within the Cybersecurity for NIST Smart Manufacturing Systems Testbed, located at the National Institute of Standards and Technology in Gaithersburg, Maryland. The Robotic System of the testbed (which this simulator models) utilizes two KUKA Youbots and four emulated machining centers. Machine tending is handled by the robots, transferring parts from station to station until all manufacturing operations are completed.
 
-This simulator breaks down testbed operations into discrete events, which are handled by the SimPy simulation framework. Individual system components are modelled in Python to closely reproduce their unique functions. Robot movements were discretized through time domain measurements, and are reproduced in the simulator using normal variate distributions.
+This simulator breaks down testbed operations into discrete events, which are handled by the SimPy simulation framework. The operations of each system component are modeled in Python to closely reproduce their unique characteristics. Robot movements were discretized through time domain measurements, and are reproduced in the simulator using normal variate distributions.
 
 ## Dependencies
 As of this moment, the simulator is running with the following dependencies:
