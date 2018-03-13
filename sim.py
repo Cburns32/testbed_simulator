@@ -57,7 +57,9 @@ for i in range(0,ITERATIONS):
 
     # Instantiate the PLC object
     plc = PLC(env, raw_queue)
-
+    #Establish connection on switch
+    Switch(env, 'plc', 'Sending', 'plc_MAC', 'plc_IP', 1)
+    
     # Randomize the startup delay
     #startup_t = random_startup_t(0.0,0.100,4)
 
