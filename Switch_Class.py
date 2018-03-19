@@ -2,6 +2,10 @@ import simpy
 import random
 import logger
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> dee222d8c5d79842d7364162a7e9327b65d9b89f
 # TODO Implement logger
 # TODO Return connection status
 
@@ -51,8 +55,12 @@ class Switch(object):
             self.msg = 'Removed from cache'
 
 # port_capacity prevents prevents too many entries from entering cache
+<<<<<<< HEAD
     def port_capacity(self, avail_ports):
         self.port_occupied = portList.index()
+=======
+    def port_capacity(self, msg, ports_occupied, avail_ports):
+>>>>>>> dee222d8c5d79842d7364162a7e9327b65d9b89f
         if self.msg == 'Stored':
             self.ports_occupied += 1
         if self.msg =='Removed':
