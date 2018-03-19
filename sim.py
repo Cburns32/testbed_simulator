@@ -21,6 +21,7 @@ from Link_Class             import Link
 from Station_Class          import Station
 from Queue_Class            import Queue
 from FinishedParts_Class    import FinishedParts
+from Switch_Class           import Switch
 
 # Create the logger and set the level
 log.getLogger("ts")
@@ -58,7 +59,7 @@ for i in range(0,ITERATIONS):
     # Instantiate the PLC object
     plc = PLC(env, raw_queue)
     #Establish connection on switch
-    Switch(env, 'plc', 'Sending', 'plc_MAC', 'plc_IP', 1)
+    plcConnection = Switch(env, 'plc', 'Sending', 'plc_MAC', 'plc_IP', 1)
     
     # Randomize the startup delay
     #startup_t = random_startup_t(0.0,0.100,4)
